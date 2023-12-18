@@ -1,0 +1,68 @@
+name: "Test - First CALL"
+description: This is a description how to define a test
+interface_data_definition:
+  connection_type: mqtt # possible connection types are tcp/rest/mqtt
+  protocol_data_description:
+    - mqtt_message:
+        name: setup_service_rq
+        parameter:
+          - VALUE1: string
+        topic: "0.0.1/setup/service/rq"
+        payload: "{\"instancename\": \"$VALUE1\" }"
+    - mqtt_message:
+        name: setup_service_response
+        parameter:
+          - VALUE1: string
+          - VALUE2: string
+          - VALUE3: string
+        topic: "0.0.1/setup/service/$VALUE1"
+        payload: "{ \"global\": { $VALUE2 },\"service\": { $VALUE3 }, \"$VALUE1\": {$VALUE2}, }"
+
+setup:
+  entries:
+    - create_docker_mongodb:
+        host: 127.0.0.1
+        port: 27017
+        user: test
+        password: 1234
+        database: zimmer
+        name: mongo
+
+    - init_mongodb:
+        name: mongo
+        collection: test_collection
+        data:
+          - data_entry:
+              name: Michael
+              age: 23
+              plz: "5432"
+          - data_entry:
+              name: ltk
+              age: 23
+              plz: "5472"
+
+    - connection:
+        name: mqtt-broker
+        connection_type: mqtt
+        host: localhost
+        port: 1883
+
+test:
+  run:
+   - send_mqtt:
+       message: setup_service_rq
+       parameters:
+         - conveyorservice_01
+   - recv_mqtt:
+        message: setup_service_respone
+        verify:
+          - is_eq:
+              left: VALUE1
+              right: "global"
+              allow_failure: true
+          - regex:
+              left: VALUE1
+              right: "[a-z]+"
+              allow_failure: false
+
+
