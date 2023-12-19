@@ -2,7 +2,7 @@ use std::fs;
 use std::fs::File;
 use serde::{Deserialize, Serialize};
 use crate::definitions::program_configuration::Config;
-use crate::definitions::write;
+use crate::definitions::{Visitor, write};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ConnectionType{
@@ -18,10 +18,25 @@ pub struct MqttMessage{
     topic: String,
     payload: String
 }
+impl MqttMessage{
+    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+        visitor.visit_mqtt_message_def(self);
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ProtocolDataDescription{
     mqtt_message(MqttMessage)
+}
+
+impl ProtocolDataDescription{
+    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+        match(self){
+            ProtocolDataDescription::mqtt_message(value) => {
+                value.accept(visitor);
+            }
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,14 +46,8 @@ pub struct InterfaceDataDefinition{
 }
 
 impl InterfaceDataDefinition{
-    pub fn generate_mark_down(self: &Self,file: &mut fs::File){
-        write(file, "## IDD - Interface Data Definition \n\n --- \n".to_string());
-        self.generate_connection_type(file);
-        self.generate_protocol_definition(file);
-        write(file, "--- \n".to_string());
-    }
 
-    fn generate_connection_type(self: &Self, file: &mut File) {
+    pub fn generate_connection_type(self: &Self, file: &mut File) {
         match (self.connection_type) {
             ConnectionType::mqtt => {
                 write(file, "The used connection type is MQTT \n\n  \n".to_string());
@@ -52,7 +61,7 @@ impl InterfaceDataDefinition{
         }
     }
 
-    fn generate_protocol_definition(self: &Self, file: &mut File) {
+    pub fn generate_protocol_definition(self: &Self, file: &mut File) {
         for x in &self.protocol_data_description {
             match (x) {
                 ProtocolDataDescription::mqtt_message(value) => {
@@ -73,5 +82,11 @@ impl InterfaceDataDefinition{
                 }
             }
         }
+    }
+
+    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+        visitor.visit_interface_data_def(self);
+
+
     }
 }

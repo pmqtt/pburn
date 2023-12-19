@@ -22,14 +22,15 @@ setup:
   entries:
     - create_docker_mongodb:
         host: 127.0.0.1
-        port: 27017
-        user: test
+        port: 8084
+        user: root
         password: 1234
         database: zimmer
         name: mongo
 
     - init_mongodb:
         name: mongo
+        database: zimmer
         collection: test_collection
         data:
           - data_entry:
