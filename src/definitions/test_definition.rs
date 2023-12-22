@@ -1,14 +1,15 @@
-use serde::{Deserialize, Serialize};
 use crate::definitions::Visitor;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegexDefinition {
     left: String,
     right: String,
-    allow_failure: bool
+    allow_failure: bool,
 }
-impl RegexDefinition{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+impl RegexDefinition {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
         visitor.visit_regex_def(self);
     }
 }
@@ -16,41 +17,46 @@ impl RegexDefinition{
 pub struct IsEqualDefintion {
     left: String,
     right: serde_yaml::Value,
-    allow_failure: bool
+    allow_failure: bool,
 }
-impl IsEqualDefintion{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+impl IsEqualDefintion {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
         visitor.visit_is_equal_def(self);
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum VerificationDefinition {
+    #[allow(non_camel_case_types)]
     is_eq(IsEqualDefintion),
-    regex(RegexDefinition)
+    #[allow(non_camel_case_types)]
+    regex(RegexDefinition),
 }
-impl VerificationDefinition{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
-       match(self){
-           VerificationDefinition::is_eq(value) => {
-               value.accept(visitor);
-           }
-           VerificationDefinition::regex(value) => {
-               value.accept(visitor);
-           }
-       }
+impl VerificationDefinition {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
+        match self {
+            VerificationDefinition::is_eq(value) => {
+                value.accept(visitor);
+            }
+            VerificationDefinition::regex(value) => {
+                value.accept(visitor);
+            }
+        }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RecvMqttDefinition {
     message: String,
-    verify: Vec<VerificationDefinition>
+    verify: Vec<VerificationDefinition>,
 }
-impl RecvMqttDefinition{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+impl RecvMqttDefinition {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
         visitor.visit_recv_mqtt_dev(self);
-        for v in &mut self.verify{
+        for v in &mut self.verify {
             v.accept(visitor);
         }
     }
@@ -59,29 +65,33 @@ impl RecvMqttDefinition{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SendMqttDefinition {
     message: String,
-    parameters: Vec<String>
+    parameters: Vec<String>,
 }
-impl SendMqttDefinition{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+impl SendMqttDefinition {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
         visitor.visit_send_mqtt_def(self);
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum RunDefinition {
+    #[allow(non_camel_case_types)]
     send_mqtt(SendMqttDefinition),
-    recv_mqtt(RecvMqttDefinition)
+    #[allow(non_camel_case_types)]
+    recv_mqtt(RecvMqttDefinition),
 }
-impl RunDefinition{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
-       match self{
-           RunDefinition::send_mqtt(value) => {
-               value.accept(visitor);
-           }
-           RunDefinition::recv_mqtt(value) => {
-               value.accept(visitor);
-           }
-       }
+impl RunDefinition {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
+        match self {
+            RunDefinition::send_mqtt(value) => {
+                value.accept(visitor);
+            }
+            RunDefinition::recv_mqtt(value) => {
+                value.accept(visitor);
+            }
+        }
     }
 }
 
@@ -89,10 +99,11 @@ impl RunDefinition{
 pub struct TestDefinition {
     run: Vec<RunDefinition>,
 }
-impl TestDefinition{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+impl TestDefinition {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
         visitor.visit_test_def(self);
-        for r in &mut self.run{
+        for r in &mut self.run {
             r.accept(visitor);
         }
     }

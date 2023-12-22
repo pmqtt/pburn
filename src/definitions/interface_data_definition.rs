@@ -1,37 +1,48 @@
-use std::fs;
-use std::fs::File;
+use crate::definitions::{write, Visitor};
 use serde::{Deserialize, Serialize};
-use crate::definitions::program_configuration::Config;
-use crate::definitions::{Visitor, write};
+use std::fs::File;
+use bollard::service::Config;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ConnectionType{
+pub enum ConnectionType {
+    #[allow(non_camel_case_types)]
     mqtt,
+    #[allow(non_camel_case_types)]
     rest,
-    tcp
+    #[allow(non_camel_case_types)]
+    tcp,
+}
+impl ConnectionType{
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
+        visitor.visit_connection_type_def(self);
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MqttMessage{
-    name: String,
-    parameter: Vec<serde_yaml::Value>,
-    topic: String,
-    payload: String
+pub struct MqttMessage {
+    pub(crate) name: String,
+    pub(crate) parameter: Vec<serde_yaml::Value>,
+    pub(crate) topic: String,
+    pub(crate) payload: String,
 }
-impl MqttMessage{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+impl MqttMessage {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
         visitor.visit_mqtt_message_def(self);
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ProtocolDataDescription{
-    mqtt_message(MqttMessage)
+pub enum ProtocolDataDescription {
+    #[allow(non_camel_case_types)]
+    mqtt_message(MqttMessage),
 }
 
-impl ProtocolDataDescription{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
-        match(self){
+impl ProtocolDataDescription {
+    #[allow(dead_code)]
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
+        match self {
             ProtocolDataDescription::mqtt_message(value) => {
                 value.accept(visitor);
             }
@@ -40,17 +51,19 @@ impl ProtocolDataDescription{
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct InterfaceDataDefinition{
+pub struct Definition {
     pub(crate) connection_type: ConnectionType,
-    protocol_data_description: Vec<ProtocolDataDescription>
+    pub(crate) protocol_data_description: Vec<ProtocolDataDescription>,
 }
 
-impl InterfaceDataDefinition{
-
+impl Definition {
     pub fn generate_connection_type(self: &Self, file: &mut File) {
-        match (self.connection_type) {
+        match self.connection_type {
             ConnectionType::mqtt => {
-                write(file, "The used connection type is MQTT \n\n  \n".to_string());
+                write(
+                    file,
+                    "The used connection type is MQTT \n\n  \n".to_string(),
+                );
             }
             ConnectionType::rest => {
                 write(file, "The used connection type is REST \n".to_string());
@@ -63,7 +76,7 @@ impl InterfaceDataDefinition{
 
     pub fn generate_protocol_definition(self: &Self, file: &mut File) {
         for x in &self.protocol_data_description {
-            match (x) {
+            match x {
                 ProtocolDataDescription::mqtt_message(value) => {
                     write(file, format!("### MQTT-Message {}\n\n", value.name));
                     write(file, "**Parameters:**\n\n".to_string());
@@ -71,7 +84,9 @@ impl InterfaceDataDefinition{
                         if let Some(parameters) = parameter_items.as_mapping() {
                             for (key, value) in parameters {
                                 let Some(key_str) = key.as_str() else { todo!() };
-                                let Some(value_str) = value.as_str() else { todo!() };
+                                let Some(value_str) = value.as_str() else {
+                                    todo!()
+                                };
                                 write(file, format!("- `{}`: {}\n", key_str, value_str));
                             }
                         }
@@ -84,9 +99,23 @@ impl InterfaceDataDefinition{
         }
     }
 
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
+        visitor.visit_defination(self);
+        self.connection_type.accept(visitor);
+    }
+
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InterfaceDataDefinition {
+    pub(crate) data_def: Vec::<Definition>
+}
+impl InterfaceDataDefinition {
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
         visitor.visit_interface_data_def(self);
-
-
+        for def in &mut self.data_def {
+            def.accept(visitor);
+        }
     }
 }

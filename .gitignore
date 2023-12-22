@@ -1,1 +1,8 @@
 /target
+/Cargo.lock
+/Cargo.toml
+/config.md
+/config2.md
+/.idea/modules.xml
+/.idea/pburn.iml
+/.idea/vcs.xml

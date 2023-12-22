@@ -1,10 +1,8 @@
-use std::fs;
-use serde::{Deserialize, Serialize};
 use crate::definitions::interface_data_definition::InterfaceDataDefinition;
-use crate::definitions::setup_definition::{Setup, SetupCommand};
-use crate::definitions::{Visitor, write};
+use crate::definitions::setup_definition::Setup;
 use crate::definitions::test_definition::TestDefinition;
-
+use crate::definitions::Visitor;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -15,11 +13,10 @@ pub struct Config {
     test: TestDefinition,
 }
 
-impl Config{
-    pub fn accept<V: Visitor>(&mut self,visitor: &mut V){
+impl Config {
+    pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
         visitor.visit_config(self);
         self.interface_data_definition.accept(visitor);
         self.setup.accept(visitor);
     }
 }
-

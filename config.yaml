@@ -1,22 +1,26 @@
 name: "Test - First CALL"
+
 description: This is a description how to define a test
+
 interface_data_definition:
-  connection_type: mqtt # possible connection types are tcp/rest/mqtt
-  protocol_data_description:
-    - mqtt_message:
-        name: setup_service_rq
-        parameter:
-          - VALUE1: string
-        topic: "0.0.1/setup/service/rq"
-        payload: "{\"instancename\": \"$VALUE1\" }"
-    - mqtt_message:
-        name: setup_service_response
-        parameter:
-          - VALUE1: string
-          - VALUE2: string
-          - VALUE3: string
-        topic: "0.0.1/setup/service/$VALUE1"
-        payload: "{ \"global\": { $VALUE2 },\"service\": { $VALUE3 }, \"$VALUE1\": {$VALUE2}, }"
+  data_def:
+    - definition:
+      connection_type: mqtt # possible connection types are tcp/rest/mqtt
+      protocol_data_description:
+        - mqtt_message:
+            name: setup_service_rq
+            parameter:
+              - VALUE1: string
+            topic: "0.0.1/setup/service/rq"
+            payload: "{\"instancename\": \"$VALUE1\" }"
+        - mqtt_message:
+            name: setup_service_response
+            parameter:
+              - VALUE1: string
+              - VALUE2: string
+              - VALUE3: string
+            topic: "0.0.1/setup/service/$VALUE1"
+            payload: "{ \"global\": { $VALUE2 },\"service\": { $VALUE3 }, \"$VALUE1\": {$VALUE2}, }"
 
 setup:
   entries:
@@ -46,7 +50,7 @@ setup:
         name: mqtt-broker
         connection_type: mqtt
         host: localhost
-        port: 1883
+        port: 1889
 
 test:
   run:
