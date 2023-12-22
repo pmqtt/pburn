@@ -96,7 +96,7 @@ impl crate::definitions::Visitor for GenerateMarkDownVisitor {
     }
 
 
-    fn visit_defination(&mut self, def: &mut Definition) {
+    fn visit_definition(&mut self, def: &mut Definition) {
         write(
             &mut self.file,
             "## IDD - Interface Data Definition \n\n --- \n".to_string(),

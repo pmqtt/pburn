@@ -18,5 +18,6 @@ impl Config {
         visitor.visit_config(self);
         self.interface_data_definition.accept(visitor);
         self.setup.accept(visitor);
+        self.test.accept(visitor);
     }
 }

@@ -49,6 +49,7 @@ impl VerificationDefinition {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RecvMqttDefinition {
+    pub(crate) used_connection: String,
     message: String,
     verify: Vec<VerificationDefinition>,
 }
@@ -64,8 +65,9 @@ impl RecvMqttDefinition {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SendMqttDefinition {
-    message: String,
-    parameters: Vec<String>,
+    pub(crate) used_connection: String,
+    pub(crate) message: String,
+    pub(crate) parameters: Vec<String>,
 }
 impl SendMqttDefinition {
     #[allow(dead_code)]

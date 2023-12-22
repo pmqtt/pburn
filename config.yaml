@@ -55,19 +55,21 @@ setup:
 test:
   run:
    - send_mqtt:
+       used_connection: mqtt-broker
        message: setup_service_rq
        parameters:
          - conveyorservice_01
    - recv_mqtt:
-        message: setup_service_respone
-        verify:
-          - is_eq:
-              left: VALUE1
-              right: "global"
-              allow_failure: true
-          - regex:
-              left: VALUE1
-              right: "[a-z]+"
-              allow_failure: false
+      used_connection: mqtt-broker
+      message: setup_service_respone
+      verify:
+        - is_eq:
+            left: VALUE1
+            right: "global"
+            allow_failure: true
+        - regex:
+            left: VALUE1
+            right: "[a-z]+"
+            allow_failure: false
 
 

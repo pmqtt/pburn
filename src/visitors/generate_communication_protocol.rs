@@ -1,14 +1,12 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Formatter;
-use crate::definitions::interface_data_definition::{ConnectionType, Definition, InterfaceDataDefinition, MqttMessage, ProtocolDataDescription};
-use crate::definitions::program_configuration::Config;
-use crate::definitions::setup_definition::{ConnectionCmd, CreateDockerMongoDbCmd, DataEntry, InitMongoDbCmd, Setup, SetupCommand};
-use crate::definitions::test_definition::{IsEqualDefintion, RecvMqttDefinition, RegexDefinition, RunDefinition, SendMqttDefinition, TestDefinition};
+use crate::definitions::interface_data_definition::{ Definition, InterfaceDataDefinition, MqttMessage, ProtocolDataDescription};
 use crate::definitions::{Visitor, write};
 
 
-enum ParameterValue{
+#[derive(Clone)]
+pub enum ParameterValue{
     Int(u32),
     Real(f64),
     Str(String),
@@ -38,7 +36,8 @@ impl fmt::Display for ParameterValue{
     }
 }
 
-enum ParameterType{
+#[derive(Clone)]
+pub enum ParameterType{
     Int,
     Real,
     Str,
@@ -46,10 +45,11 @@ enum ParameterType{
     None
 }
 
-struct Parameter{
-    key: String,
-    typ: ParameterType,
-    value: ParameterValue
+#[derive(Clone)]
+pub struct Parameter{
+    pub(crate) key: String,
+    pub(crate) typ: ParameterType,
+    pub(crate) value: ParameterValue
 }
 impl Parameter{
     pub fn new(key:String,typ: ParameterType, value: ParameterValue) -> Result<Parameter,String>{
@@ -98,10 +98,11 @@ impl Parameter{
     }
 }
 
+#[derive(Clone)]
 pub struct MqttProtocol{
-    topic: String,
-    payload: String,
-    parameters: Vec<Parameter>
+    pub(crate) topic: String,
+    pub(crate) payload: String,
+    pub(crate) parameters: Vec<Parameter>
 }
 
 impl MqttProtocol{
@@ -143,6 +144,14 @@ pub struct GenerateCommunicationProtocol{
     pub(crate) protocol_type: HashMap<String,ProtocolType>
 }
 
+impl GenerateCommunicationProtocol{
+    pub fn new() -> GenerateCommunicationProtocol{
+        GenerateCommunicationProtocol{
+            protocol_type: Default::default(),
+        }
+    }
+}
+
 impl Visitor for GenerateCommunicationProtocol{
 
     fn visit_interface_data_def(&mut self, def: &mut InterfaceDataDefinition) {
@@ -153,7 +162,7 @@ impl Visitor for GenerateCommunicationProtocol{
 
     }
 
-    fn visit_defination(&mut self, def: &mut Definition) {
+    fn visit_definition(&mut self, def: &mut Definition) {
     }
 
     fn visit_mqtt_message_def(&mut self, def: &mut MqttMessage) {

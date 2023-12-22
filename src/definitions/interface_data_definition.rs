@@ -100,8 +100,12 @@ impl Definition {
     }
 
     pub fn accept<V: Visitor>(&mut self, visitor: &mut V) {
-        visitor.visit_defination(self);
+        visitor.visit_definition(self);
         self.connection_type.accept(visitor);
+        for pdd in &mut self.protocol_data_description{
+            pdd.accept(visitor);
+        }
+
     }
 
 }

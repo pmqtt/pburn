@@ -37,8 +37,8 @@ enum DbData {
     none,
 }
 pub struct GenerateSetupEnvironmentVisitor {
-    container_id_to_name: HashMap<String, String>,
-    current_db_data: DbData,
+   pub(crate) container_id_to_name: HashMap<String, String>,
+   pub(crate) current_db_data: DbData,
 }
 impl GenerateSetupEnvironmentVisitor {
     pub fn new() -> GenerateSetupEnvironmentVisitor {

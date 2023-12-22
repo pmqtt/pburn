@@ -67,7 +67,7 @@ pub(crate) trait Visitor {
     fn visit_setup_def(&mut self, def: &mut Setup){
         
     }
-    fn visit_defination(&mut self, def: &mut Definition){
+    fn visit_definition(&mut self, def: &mut Definition){
         
     }
     fn visit_interface_data_def(&mut self, def: &mut InterfaceDataDefinition){
