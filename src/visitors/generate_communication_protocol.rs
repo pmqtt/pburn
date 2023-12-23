@@ -121,7 +121,7 @@ impl MqttProtocol{
     }
     pub fn create_payload(&self,input: &Vec<Parameter>) ->  Result<String,String>{
         if input.len() == self.parameters.len(){
-            let mut payload = self.topic.clone();
+            let mut payload = self.payload.clone();
             for i in 0..input.len() {
                 // Todo check is input[i] == parameter[i]
                 payload = payload.replace(format!("${}",self.parameters[i].key).as_str(),

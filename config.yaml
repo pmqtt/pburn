@@ -61,7 +61,11 @@ test:
          - conveyorservice_01
    - recv_mqtt:
       used_connection: mqtt-broker
-      message: setup_service_respone
+      message: setup_service_response
+      parameters:
+        - conveyorservice_01
+        - kp
+        - kp
       verify:
         - is_eq:
             left: VALUE1

@@ -10,7 +10,7 @@ use crate::definitions::test_definition::{
     TestDefinition,
 };
 use crate::definitions::Visitor;
-use crate::docker::{create_mongo_db_container, create_mosquitto_docker, docker_rm_container};
+use crate::docker::{create_mongo_db_container, create_mosquitto_docker, docker_rm_container, get_container_ip};
 use crate::driver::{create_mongo_database_if_not_exists, insert_json_into_collection, MongoDb};
 use core::option::Option;
 
@@ -36,17 +36,40 @@ enum DbData {
     #[allow(non_camel_case_types)]
     none,
 }
+
+#[derive(Clone)]
+pub struct ConnectionProperty{
+    host: String,
+    port: String
+}
+impl ConnectionProperty{
+    pub fn get_host(&self)->&String{
+        return &self.host;
+    }
+    pub fn get_port(&self)->&String{
+        return &self.port;
+    }
+}
+
+
 pub struct GenerateSetupEnvironmentVisitor {
-   pub(crate) container_id_to_name: HashMap<String, String>,
-   pub(crate) current_db_data: DbData,
+    pub(crate) container_id_to_name: HashMap<String, String>,
+    name_to_connection_property: HashMap<String, ConnectionProperty>,
+    pub(crate) current_db_data: DbData,
 }
 impl GenerateSetupEnvironmentVisitor {
     pub fn new() -> GenerateSetupEnvironmentVisitor {
         GenerateSetupEnvironmentVisitor {
             container_id_to_name: HashMap::new(),
+            name_to_connection_property: Default::default(),
             current_db_data: DbData::none,
         }
     }
+
+    pub fn get_connection_property_by_id(&self,name: &String) -> Option<&ConnectionProperty>{
+        return self.name_to_connection_property.get(name);
+    }
+
 }
 
 impl Drop for GenerateSetupEnvironmentVisitor{
@@ -78,6 +101,10 @@ impl Visitor for GenerateSetupEnvironmentVisitor {
         match ret_id {
             Ok(value) => match &def.docker_id {
                 None => {
+                    &self.name_to_connection_property.insert(def.name.clone(),ConnectionProperty{
+                        host: def.host.clone(),
+                        port: def.port.clone(),
+                    });
                     def.docker_id = Some(value);
                     self.container_id_to_name
                         .insert(def.name.clone(), def.docker_id.as_ref().unwrap().clone());
@@ -85,7 +112,6 @@ impl Visitor for GenerateSetupEnvironmentVisitor {
                         "mongodb://{}:{}@{}:{}",
                         def.user, def.password, def.host, def.port
                     );
-                    println!("Connection String:{}", connection_str);
 
                     let mongo_db = create_mongo_database_if_not_exists(
                         connection_str.as_str(),
@@ -129,7 +155,6 @@ impl Visitor for GenerateSetupEnvironmentVisitor {
     }
 
     fn visit_data_entry(&mut self, def: &mut DataEntry) {
-        println!("data entry");
         match &self.current_db_data {
             DbData::mongo(data) => {
                 let json = yaml_to_json(&def.data_entry);
@@ -155,8 +180,13 @@ impl Visitor for GenerateSetupEnvironmentVisitor {
     }
     fn visit_connection_def(&mut self, def: &mut ConnectionCmd) {
         let res = create_mosquitto_docker(def.name.as_str(),"eclipse-mosquitto",def.port.as_str());
+        &self.name_to_connection_property.insert(def.name.clone(),ConnectionProperty{
+            host: def.host.clone(),
+            port: def.port.clone(),
+        });
         match res{
             Ok(id) => {
+                println!("{:?}",get_container_ip(&id.as_str()));
                 self.container_id_to_name.insert(def.name.clone(),id);
             }
             Err(e) => { println!("{:?}",e);}

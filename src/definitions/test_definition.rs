@@ -50,8 +50,9 @@ impl VerificationDefinition {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RecvMqttDefinition {
     pub(crate) used_connection: String,
-    message: String,
-    verify: Vec<VerificationDefinition>,
+    pub(crate) message: String,
+    pub(crate) parameters: Vec<String>,
+    pub(crate) verify: Vec<VerificationDefinition>,
 }
 impl RecvMqttDefinition {
     #[allow(dead_code)]
