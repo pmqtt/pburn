@@ -1,6 +1,6 @@
 /target
 /Cargo.lock
-/Cargo.toml
+Cargo.toml
 /config.md
 /config2.md
 /.idea/modules.xml

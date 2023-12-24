@@ -15,9 +15,9 @@ impl RegexDefinition {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IsEqualDefintion {
-    left: String,
-    right: serde_yaml::Value,
-    allow_failure: bool,
+    pub(crate) left: String,
+    pub(crate) right: String,
+    pub(crate) allow_failure: bool,
 }
 impl IsEqualDefintion {
     #[allow(dead_code)]

@@ -38,6 +38,16 @@ fn main() {
     scrape_config.accept(&mut idd_visitor);
     let mut playbook: GenerateTest = GenerateTest::new(Rc::new(setup_generation_visitor),Rc::new(idd_visitor));
     scrape_config.accept(&mut playbook);
-    playbook.playbook[0].execute();
+    for section in &mut playbook.playbook{
+        section.execute();
+        match section.verify(){
+            Ok(success) => {
+                if success{
+                    println!("Test success");
+                }
+            }
+            Err(_) => {}
+        }
+    }
 
 }

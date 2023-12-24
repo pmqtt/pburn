@@ -56,24 +56,22 @@ test:
   run:
    - send_mqtt:
        used_connection: mqtt-broker
-       message: setup_service_rq
+       message: setup_service_response
        parameters:
          - conveyorservice_01
+         - lp
+         - lp
    - recv_mqtt:
       used_connection: mqtt-broker
       message: setup_service_response
       parameters:
         - conveyorservice_01
-        - kp
-        - kp
+        - lp
+        - lp
       verify:
         - is_eq:
-            left: VALUE1
-            right: "global"
+            left: $PAYLOAD
+            right: '{ "global": { lp },"service": { lp }, "conveyorservice_01": {lp}, }' #$GET_MESSAGE
             allow_failure: true
-        - regex:
-            left: VALUE1
-            right: "[a-z]+"
-            allow_failure: false
 
 
