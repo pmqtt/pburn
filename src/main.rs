@@ -12,6 +12,7 @@ use crate::visitors::generate_mark_down::GenerateMarkDownVisitor;
 use crate::visitors::generate_setup_environment::GenerateSetupEnvironmentVisitor;
 use clap::Parser;
 use definitions::program_configuration::*;
+use crate::runtime::RuntimeEnvironment;
 use crate::visitors::generate_communication_protocol::GenerateCommunicationProtocol;
 use crate::visitors::generate_test::GenerateTest;
 
@@ -36,11 +37,15 @@ fn main() {
     scrape_config.accept(&mut markdown_visitor);
     scrape_config.accept(&mut setup_generation_visitor);
     scrape_config.accept(&mut idd_visitor);
-    let mut playbook: GenerateTest = GenerateTest::new(Rc::new(setup_generation_visitor),Rc::new(idd_visitor));
+    let mut env: RuntimeEnvironment = RuntimeEnvironment::new();
+    let mut playbook: GenerateTest = GenerateTest::new(Rc::new(setup_generation_visitor),Rc::new(idd_visitor),env);
     scrape_config.accept(&mut playbook);
+    env = playbook.environment;
     for section in &mut playbook.playbook{
         let _ = section.execute();
         match section.verify(){
+        section.execute(&mut env);
+        match section.verify(&mut env){
             Ok(success) => {
                 if success{
                     println!("Test success");
