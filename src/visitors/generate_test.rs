@@ -1,13 +1,14 @@
 use std::rc::Rc;
 use std::time::Duration;
+use clap::builder::TypedValueParser;
+use tokio::time::timeout;
 use crate::definitions::interface_data_definition::MqttMessage;
 use crate::definitions::test_definition::{IsEqualDefintion, RecvMqttDefinition, RegexDefinition, RunDefinition, SendMqttDefinition, TestDefinition};
-use crate::definitions::test_definition::{IsEqualDefintion, RecvMqttDefinition, RunDefinition, SendMqttDefinition, TestDefinition};
 use crate::definitions::Visitor;
 use crate::visitors::generate_communication_protocol::{GenerateCommunicationProtocol, MqttProtocol, Parameter, ParameterType, ParameterValue, ProtocolType};
 use crate::visitors::generate_setup_environment::GenerateSetupEnvironmentVisitor;
 
-use crate::network::mqtt_broker::{MqttBroker};
+use crate::network::mqtt_broker::{MqttBroker, MqttMessageFromBroker};
 use crate::runtime::{RunTimeData, RuntimeEnvironment};
 
 #[derive(Clone)]
@@ -70,9 +71,18 @@ pub struct MqttRecvPlaybookItem{
 
 impl PlaybookItem for MqttRecvPlaybookItem {
     fn execute(&mut self, env: &mut RuntimeEnvironment) -> Result<bool, String> {
-        let payload = self.mqtt_broker.get_message().payload;
-        env.insert("$PAYLOAD".to_string(), RunTimeData::String(payload.clone()));
-        Ok(true)
+        let res = self.mqtt_broker.get_message();
+        match res{
+            Ok(message) => {
+                let payload = message.payload;
+                env.insert("$PAYLOAD".to_string(), RunTimeData::String(payload.clone()));
+                Ok(true)
+            }
+            Err(err) => {
+                return Err(err);
+            }
+        }
+
     }
 
     fn verify(&mut self, env: &mut RuntimeEnvironment) -> Result<bool, String> {
@@ -143,7 +153,7 @@ impl Visitor for GenerateTest{
             if let Some(connection_prop) = self.setup.get_connection_property_by_id(&def.used_connection) {
                 let host = connection_prop.get_host();
                 let port = connection_prop.get_port();
-                let mqtt_broker = MqttBroker::new(&host, port.parse::<u16>().unwrap());
+                let mqtt_broker = MqttBroker::new(&host, port.parse::<u16>().unwrap(),None);
 
                 let playbook_item = MqttSendPlaybookItem {
                     item: p.clone(),
@@ -170,7 +180,7 @@ impl Visitor for GenerateTest{
             if let Some(connection_prop) = self.setup.get_connection_property_by_id(&def.used_connection) {
                 let host = connection_prop.get_host();
                 let port = connection_prop.get_port();
-                let mut broker = MqttBroker::new(&host, port.parse::<u16>().unwrap());
+                let mut broker = MqttBroker::new(&host, port.parse::<u16>().unwrap(),Some(Duration::from_secs(def.timeout.parse::<u64>().unwrap())));
 
                 let topic = p.create_topic(&arguments).unwrap_or_default();
                 broker.subscribe(&topic);

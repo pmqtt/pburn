@@ -42,9 +42,12 @@ fn main() {
     scrape_config.accept(&mut playbook);
     env = playbook.environment;
     for section in &mut playbook.playbook{
-        let _ = section.execute();
-        match section.verify(){
-        section.execute(&mut env);
+        match section.execute(&mut env){
+            Ok(_) => {}
+            Err(e) => {
+                println!("Execution: {:?}", e);
+            }
+        }
         match section.verify(&mut env){
             Ok(success) => {
                 if success{
