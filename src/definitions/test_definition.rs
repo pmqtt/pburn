@@ -53,6 +53,7 @@ pub struct RecvMqttDefinition {
     pub(crate) message: String,
     pub(crate) parameters: Vec<String>,
     pub(crate) verify: Vec<VerificationDefinition>,
+    pub(crate) timeout: String,
 }
 impl RecvMqttDefinition {
     #[allow(dead_code)]

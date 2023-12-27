@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::time::Duration;
 use crate::definitions::interface_data_definition::MqttMessage;
 use crate::definitions::test_definition::{IsEqualDefintion, RecvMqttDefinition, RegexDefinition, RunDefinition, SendMqttDefinition, TestDefinition};
 use crate::definitions::Visitor;
@@ -35,7 +36,7 @@ pub trait PlaybookItem{
 
 pub struct BrokerConnection{
     pub(crate) host: String,
-    pub(crate) port: String
+    pub(crate) port: String,
 }
 
 pub struct MqttSendPlaybookItem{
@@ -74,22 +75,31 @@ impl PlaybookItem for MqttRecvPlaybookItem {
     }
     // Introduce Data Map
     fn verify(&mut self) -> Result<bool, String> {
-       let payload = self.mqtt_broker.get_message().payload;
-       match &self.verifier{
-           None => {}
-           Some(v) => {
-               match v{
-                   Verifier::IsEqual(left, right, allow) => {
-                       // Todo: allow on failure
-                       if payload.as_str() == right{
-                           return Ok(true);
-                       }
-                       return Ok(false);
-                   }
-               }
-           }
-       }
-       Ok(true)
+        let result = self.mqtt_broker.get_message();
+        match result{
+            Ok(message) => {
+                let payload = message.payload;
+                match &self.verifier{
+                    None => {}
+                    Some(v) => {
+                        match v{
+                            Verifier::IsEqual(left, right, allow) => {
+                                // Todo: allow on failure
+                                if payload.as_str() == right{
+                                    return Ok(true);
+                                }
+                                return Ok(false);
+                            }
+                        }
+                    }
+                }
+                Ok(true)
+            }
+            Err(res) => {
+                println!("{:?}",res);
+                Err(res)
+            }
+        }
     }
 
     fn set_verifier(&mut self, verifier: Verifier){
@@ -156,7 +166,7 @@ impl Visitor for GenerateTest{
                                 host: host.clone(),
                                 port: port.clone(),
                             },
-                            mqtt_broker: MqttBroker::new(&host,port.clone().parse::<u16>().unwrap()),
+                            mqtt_broker: MqttBroker::new(&host,port.clone().parse::<u16>().unwrap(),None),
                         };
                         self.playbook.push(Box::new(playbook_item) as Box<dyn PlaybookItem>);
 
@@ -189,7 +199,7 @@ impl Visitor for GenerateTest{
                         }
                         let host = self.setup.get_connection_property_by_id(&def.used_connection).unwrap().get_host();
                         let port = self.setup.get_connection_property_by_id(&def.used_connection).unwrap().get_port();
-                        let mut broker = MqttBroker::new(&host,port.clone().parse::<u16>().unwrap());
+                        let mut broker = MqttBroker::new(&host,port.clone().parse::<u16>().unwrap(),Some(Duration::from_secs( def.timeout.clone().parse::<u64>().unwrap())));
                         let topic: String = p.create_topic(&arguments).unwrap().clone();
                         broker.subscribe(&topic);
                         let playbook_item = MqttRecvPlaybookItem {

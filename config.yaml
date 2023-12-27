@@ -20,7 +20,7 @@ interface_data_definition:
               - VALUE2: string
               - VALUE3: string
             topic: "0.0.1/setup/service/$VALUE1"
-            payload: "{ \"global\": { $VALUE2 },\"service\": { $VALUE3 }, \"$VALUE1\": {$VALUE2}, }"
+            payload: "{ \"global\": { $VALUE2 },\"local\": { $VALUE3 }, \"$VALUE1\": {$VALUE2}, }"
 
 setup:
   entries:
@@ -29,12 +29,12 @@ setup:
         port: 8084
         user: root
         password: 1234
-        database: zimmer
-        name: mongo
+        database: pb
+        name: mongo2
 
     - init_mongodb:
-        name: mongo
-        database: zimmer
+        name: mongo2
+        database: pb
         collection: test_collection
         data:
           - data_entry:
@@ -58,20 +58,21 @@ test:
        used_connection: mqtt-broker
        message: setup_service_response
        parameters:
-         - conveyorservice_01
+         - service_01
          - lp
          - lp
    - recv_mqtt:
       used_connection: mqtt-broker
       message: setup_service_response
+      timeout: 5
       parameters:
-        - conveyorservice_01
+        - setup_service_response
         - lp
         - lp
       verify:
         - is_eq:
             left: $PAYLOAD
-            right: '{ "global": { lp },"service": { lp }, "conveyorservice_01": {lp}, }' #$GET_MESSAGE
+            right: '{ "global": { lp },"service": { lp }, "service_01": {lp}, }' #$GET_MESSAGE
             allow_failure: true
 
 

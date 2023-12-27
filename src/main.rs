@@ -26,7 +26,6 @@ struct Args {
 fn main() {
     env::set_var("RUST_BACKTRACE", "full");
     let args: Args = Args::parse();
-
     let f = std::fs::File::open(&args.filename).expect("Could not open file.");
     //let value: serde_yaml::Value  = serde_yaml::from_reader(f).expect("Hallo Welt");
    // println!("Value:{:?}",value);
@@ -40,11 +39,13 @@ fn main() {
     let mut playbook: GenerateTest = GenerateTest::new(Rc::new(setup_generation_visitor),Rc::new(idd_visitor));
     scrape_config.accept(&mut playbook);
     for section in &mut playbook.playbook{
-        section.execute();
+        let _ = section.execute();
         match section.verify(){
             Ok(success) => {
                 if success{
                     println!("Test success");
+                }else{
+                    println!("Test failed");
                 }
             }
             Err(_) => {}
@@ -52,3 +53,5 @@ fn main() {
     }
 
 }
+
+

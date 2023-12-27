@@ -67,7 +67,8 @@ fn await_subscription(connection: & mut Connection){
 pub struct MqttMessageFromBroker{
     pub(crate) topic: String,
     pub(crate) payload: String,
-    pub(crate) connection: Option<Connection>
+    pub(crate) connection: Option<Connection>,
+    pub(crate) timeout: Option<Duration>
 }
 impl Clone for MqttMessageFromBroker{
     fn clone(&self) -> Self {
@@ -75,6 +76,7 @@ impl Clone for MqttMessageFromBroker{
             topic: self.topic.clone(),
             payload: self.payload.clone(),
             connection: None,
+            timeout: self.timeout.clone()
         }
     }
 
@@ -82,6 +84,7 @@ impl Clone for MqttMessageFromBroker{
         self.payload = source.payload.clone();
         self.topic = source.topic.clone();
         self.connection = None;
+        self.timeout = source.timeout.clone();
     }
 }
 
@@ -90,10 +93,11 @@ impl Clone for MqttMessageFromBroker{
 pub struct MqttBroker{
     client: Client,
     connection: Option<Connection>,
+    timeout: Option<Duration>,
     get_message_thread: Option<JoinHandle<MqttMessageFromBroker>>
 }
 impl MqttBroker{
-    pub fn new(host: &String, port: u16) -> MqttBroker{
+    pub fn new(host: &String, port: u16, timeout: Option<Duration>) -> MqttBroker{
         let uuid = Uuid::new_v4();
         let mut mqttoptions = MqttOptions::new(uuid.to_string(), host, port );
         mqttoptions.set_keep_alive(Duration::from_secs(5));
@@ -102,7 +106,8 @@ impl MqttBroker{
         MqttBroker{
             client: client,
             connection: Some(connection),
-            get_message_thread: None
+            get_message_thread: None,
+            timeout: timeout
         }
     }
 
@@ -111,7 +116,10 @@ impl MqttBroker{
         self.client.subscribe(topic,QoS::AtMostOnce);
         await_subscription(self.connection.as_mut().unwrap());
         let mut connection = self.connection.take().expect("Connection already in use");
+        let mut timeout: Option<Duration> = self.timeout.take();
         let handle = thread::spawn(move ||{
+            let mut time_spwan = Duration::from_secs(0);
+            let mut start_time = std::time::Instant::now();
             loop {
                 if let Ok(notification) = connection.recv() {
                     match notification {
@@ -122,7 +130,8 @@ impl MqttBroker{
                                         return MqttMessageFromBroker {
                                             topic: msg.topic.clone(),
                                             payload: String::from_utf8(msg.payload.to_vec()).unwrap(),
-                                            connection: Some(connection)
+                                            connection: Some(connection),
+                                            timeout: timeout
                                         };
                                     }
 
@@ -134,6 +143,22 @@ impl MqttBroker{
                         Err(_) => {}
                     }
                 }
+                let end_time = start_time.elapsed();
+                time_spwan = time_spwan + end_time;
+                match timeout {
+                    None => {}
+                    Some(out) => {
+                        if time_spwan > out {
+                            return MqttMessageFromBroker{
+                                timeout: Some(out),
+                                topic:"".to_string(),
+                                payload:"".to_string(),
+                                connection: Some(connection)
+                            };
+                        }
+                    }
+                }
+                start_time = std::time::Instant::now();
             }
         });
         self.get_message_thread = Some(handle);
@@ -154,7 +179,7 @@ impl MqttBroker{
         await_publish_is_send(self.connection.as_mut().unwrap());
     }
 
-    pub fn get_message(&mut self) -> MqttMessageFromBroker{
+    pub fn get_message(&mut self) -> Result<MqttMessageFromBroker,String>{
         match self.get_message_thread.take(){
             None => {
                 panic!("None");
@@ -163,7 +188,11 @@ impl MqttBroker{
                 match v.join(){
                     Ok(mut x) => {
                         self.connection = Some(x.connection.take().expect("Not exist"));
-                        return x.clone();
+                        self.timeout = x.timeout.take();
+                        if x.topic == "".to_string(){
+                            return Err("Timeout".to_string());
+                        }
+                        return Ok(x.clone());
                     }
                     Err(_) => {
                         panic!();
