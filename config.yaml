@@ -71,7 +71,7 @@ test:
       verify:
         - is_eq:
             left: $PAYLOAD
-            right: '{ "global": { lp },"service": { lp }, "conveyorservice_01": {lp}, }' #$GET_MESSAGE
+            right: '{ "global": { lp },"service": { lp }, "conveyorservice_01": {lp}, }'
             allow_failure: true
 
 
